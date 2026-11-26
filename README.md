@@ -51,6 +51,8 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h6-reorder-via | workflow | step 1 scan order, step 2 reversed, step 3 without `module.rds_provisioner[0]`; the message has a `Via:` line | See below. |
 | h7-reorder-plain | workflow | same steps as h6 with plain messages | Same as h6. After step 3 the dismissed #24 shows the path of `rds_api`, #23 shows `[1]` and #25 is fixed. |
 
+| h8-reorder-own-hash | workflow | same steps as h7, `primaryLocationLineHash` is set to the rule, file and full instance address | Alerts keep their instances in every step: #26 `rds_api`, #27 `[0]`, #28 `[1]`. After step 3 the dismissed #27 gets `fixed_at` and its instance on `main` is fixed, while #26 and #28 stay open. |
+
 ## Reorder (h6)
 
 Results with the same fingerprint are matched by their position in the SARIF, and the message is ignored. The alert for `[0]` (#21) was dismissed as "won't fix" after step 1.
