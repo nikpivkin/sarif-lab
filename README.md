@@ -30,6 +30,12 @@ To see the stored fingerprints of an analysis:
 gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanning/analyses/<id> --jq '.runs[0].results[].partialFingerprints'
 ```
 
+The alert API has no code flows. The SARIF of an analysis has them, and every result there has `properties."github/alertNumber"`, so this shows the path of each alert:
+
+```sh
+gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanning/analyses/<id> --jq '.runs[0].results[] | [.properties."github/alertNumber", .codeFlows[0].threadFlows[0].locations[0].location.message.text] | @tsv'
+```
+
 ## Results
 
 | Hypothesis | Upload | SARIF | Result |
@@ -43,7 +49,7 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h5-grouped-flows | workflow | one result with two code flows | One alert (#19). "Show paths" says "2 paths available" and lets you switch between them, but both entries are named "3 steps in main.tf" because the UI does not show the code flow message. |
 
 | h6-reorder-via | workflow | step 1 scan order, step 2 reversed, step 3 without `module.rds_provisioner[0]`; the message has a `Via:` line | See below. |
-| h7-reorder-plain | workflow | same steps as h6 with plain messages | Same states as h6: #24 (dismissed for `[0]`) stays dismissed, #25 is fixed after step 3. |
+| h7-reorder-plain | workflow | same steps as h6 with plain messages | Same as h6. After step 3 the dismissed #24 shows the path of `rds_api`, #23 shows `[1]` and #25 is fixed. |
 
 ## Reorder (h6)
 
