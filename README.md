@@ -59,6 +59,7 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h9-trivy-fingerprint | not uploaded | output of a build of aquasecurity/trivy#11760 | The three AWS-0104 results get different `primaryLocationLineHash` values. Dockerfile and Kubernetes results have no `partialFingerprints`. |
 | h10-remote-module | workflow | two results in a registry module outside the repository, code flow from the module call | Two alerts (#29, #30). The stored `primaryLocationLineHash` is empty, because the action cannot read the file. The alert page shows "Preview unavailable" for the location. "Show paths" shows the module call with its code as step 1 ("Source"), and the steps in the module have no preview. |
 | h11-remote-snippet | workflow | same as h10 with `region.snippet` and `contextRegion` | The stored SARIF has neither field, so code scanning drops them on upload. No new alerts were opened. The two results became second instances of #29 and #30, because rule, path, line and the empty `primaryLocationLineHash` match, although the category is different. |
+| h12-hash-switch | workflow | step 1 without a fingerprint, step 2 with own `primaryLocationLineHash` as in h8, same category; #32 (`[0]`) dismissed as "won't fix" after step 1 | Step 2 opens new alerts #34, #35 and #36. #31 and #33 get `fixed_at`, and #32 stays dismissed with `fixed_at`. The dismissal does not move to #35, the new open alert of the same instance. |
 
 ## Reorder (h6)
 
