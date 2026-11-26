@@ -42,6 +42,21 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h4b-version-switch | API | step 1 `v1`, step 2 `v2` | Alerts #16, #17, #18 stay open, so custom keys do not take part in matching. |
 | h5-grouped-flows | workflow | one result with two code flows | One alert (#19). "Show paths" says "2 paths available" and lets you switch between them, but both entries are named "3 steps in main.tf" because the UI does not show the code flow message. |
 
+| h6-reorder-via | workflow | step 1 scan order, step 2 reversed, step 3 without `module.rds_provisioner[0]`; the message has a `Via:` line | See below. |
+| h7-reorder-plain | workflow | same steps as h6 with plain messages | Same states as h6: #24 (dismissed for `[0]`) stays dismissed, #25 is fixed after step 3. |
+
+## Reorder (h6)
+
+Results with the same fingerprint are matched by their position in the SARIF, and the message is ignored. The alert for `[0]` (#21) was dismissed as "won't fix" after step 1.
+
+| Alert | Step 1 | Step 2 | Step 3 |
+| --- | --- | --- | --- |
+| #20 | `rds_api`, open | `[1]`, open | `[1]`, open |
+| #21 | `[0]`, dismissed | `[0]`, dismissed | `rds_api`, dismissed |
+| #22 | `[1]`, open | `rds_api`, open | fixed |
+
+After `[0]` is gone, the dismissal moves to the `rds_api` finding, and the alert that is marked as fixed is a different one.
+
 ## UI
 
 - The alert page and the alert list look the same for #7, #8 and #9. Only "Show paths" tells them apart, and each alert shows the path of its own instance, for example #9 starts at `service/main.tf (module.rds_provisioner[1])`.
