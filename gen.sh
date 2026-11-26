@@ -59,6 +59,17 @@ hyp h4a-version-overlap step2.sarif "$api | $v1 | $v2"
 hyp h4a-version-overlap step3.sarif "$api | $v2"
 hyp h4b-version-switch step1.sarif "$api | $v1"
 hyp h4b-version-switch step2.sarif "$api | $v2"
+# Reorder: step 1 keeps the scan order, step 2 reverses it, step 3 drops the module.rds_provisioner[0] instance.
+reverse='.runs[0].results |= reverse'
+drop0='.runs[0].results |= map(select(.codeFlows[0].threadFlows[0].locations[0].location.message.text | endswith("[0])") | not))'
+# Adds the caller chain to the result message, so the alert API shows which instance an alert holds.
+via='.runs[0].results[] |= (.message.text += "\nVia: " + ([.codeFlows[0].threadFlows[0].locations[:-1][].location.message.text] | join(" > ")))'
+hyp h6-reorder-via step1.sarif "$via"
+hyp h6-reorder-via step2.sarif "$via | $reverse"
+hyp h6-reorder-via step3.sarif "$via | $reverse | $drop0"
+hyp h7-reorder-plain step1.sarif '.'
+hyp h7-reorder-plain step2.sarif "$reverse"
+hyp h7-reorder-plain step3.sarif "$reverse | $drop0"
 # One result per location with one code flow per module chain; count/for_each instances share a flow.
 hyp h5-grouped-flows result.sarif '
   .runs[0].results |= (
