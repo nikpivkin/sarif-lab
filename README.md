@@ -8,6 +8,8 @@ Each `h*` directory holds a copy of the same Terraform fixture and the SARIF fil
 
 `h9-trivy-fingerprint` has no SARIF files. It holds the same fixture with a `Dockerfile` and `k8s/pod.yaml` and is scanned directly with a build of [aquasecurity/trivy#11760](https://github.com/aquasecurity/trivy/pull/11760), which sets `primaryLocationLineHash` itself.
 
+`h10-remote-module` calls `terraform-aws-modules/security-group/aws` from the registry. Trivy reports two AWS-0104 findings in the module, so their location is a file outside the repository. `gen.sh` takes a result into a hypothesis by its location or by the first step of its code flow, which is the module call here.
+
 `gen.sh` scans the repository with Trivy 0.74.0, adds code flows in the format of #11556 and builds the SARIF file of every hypothesis with `jq`. Each hypothesis has its own category, and its alerts point to its own directory.
 
 ## How to upload
@@ -55,6 +57,7 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 
 | h8-reorder-own-hash | workflow | same steps as h7, `primaryLocationLineHash` is set to the rule, file and full instance address | Alerts keep their instances in every step: #26 `rds_api`, #27 `[0]`, #28 `[1]`. After step 3 the dismissed #27 gets `fixed_at` and its instance on `main` is fixed, while #26 and #28 stay open. |
 | h9-trivy-fingerprint | not uploaded | output of a build of aquasecurity/trivy#11760 | The three AWS-0104 results get different `primaryLocationLineHash` values. Dockerfile and Kubernetes results have no `partialFingerprints`. |
+| h10-remote-module | workflow | two results in a registry module outside the repository, code flow from the module call | Two alerts (#29, #30). The stored `primaryLocationLineHash` is empty, because the action cannot read the file. The alert page shows "Preview unavailable" for the location. "Show paths" shows the module call with its code as step 1 ("Source"), and the steps in the module have no preview. |
 
 ## Reorder (h6)
 
