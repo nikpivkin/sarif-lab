@@ -51,10 +51,8 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h4a-version-overlap | API | step 1 `v1`, step 2 `v1` and `v2`, step 3 `v2` | Alerts #10, #11, #12 stay open through all steps. |
 | h4b-version-switch | API | step 1 `v1`, step 2 `v2` | Alerts #16, #17, #18 stay open, so custom keys do not take part in matching. |
 | h5-grouped-flows | workflow | one result with two code flows | One alert (#19). "Show paths" says "2 paths available" and lets you switch between them, but both entries are named "3 steps in main.tf" because the UI does not show the code flow message. |
-
 | h6-reorder-via | workflow | step 1 scan order, step 2 reversed, step 3 without `module.rds_provisioner[0]`; the message has a `Via:` line | See below. |
 | h7-reorder-plain | workflow | same steps as h6 with plain messages | Same as h6. After step 3 the dismissed #24 shows the path of `rds_api`, #23 shows `[1]` and #25 is fixed. |
-
 | h8-reorder-own-hash | workflow | same steps as h7, `primaryLocationLineHash` is set to the rule, file and full instance address | Alerts keep their instances in every step: #26 `rds_api`, #27 `[0]`, #28 `[1]`. After step 3 the dismissed #27 gets `fixed_at` and its instance on `main` is fixed, while #26 and #28 stay open. |
 | h9-trivy-fingerprint | not uploaded | output of a build of aquasecurity/trivy#11760 | The three AWS-0104 results get different `primaryLocationLineHash` values. Dockerfile and Kubernetes results have no `partialFingerprints`. |
 | h10-remote-module | workflow | two results in a registry module outside the repository, code flow from the module call | Two alerts (#29, #30). The stored `primaryLocationLineHash` is empty, because the action cannot read the file. The alert page shows "Preview unavailable" for the location. "Show paths" shows the module call with its code as step 1 ("Source"), and the steps in the module have no preview. |
