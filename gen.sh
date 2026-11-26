@@ -98,3 +98,6 @@ hyp h11-remote-snippet result.sarif '
     | .contextRegion = {startLine: $c[0].Number, endLine: $c[-1].Number,
         snippet: {text: ([$c[] | if .Truncated then "  ..." else .Content end] | join("\n"))}}
   ))'
+# Same category, step 1 with the hash from the action, step 2 with own primaryLocationLineHash as in h8.
+hyp h12-hash-switch step1.sarif '.'
+hyp h12-hash-switch step2.sarif "$own"
