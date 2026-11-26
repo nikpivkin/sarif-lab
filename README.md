@@ -6,6 +6,8 @@ Experiments with Trivy SARIF output in GitHub code scanning. They check how code
 
 Each `h*` directory holds a copy of the same Terraform fixture and the SARIF files of one hypothesis. The module `modules/sg` has an egress rule to `0.0.0.0/0` (AWS-0104). `service/main.tf` calls it with `count = 2`, and `other/main.tf` calls it once, so Trivy reports three findings on the same line of the module.
 
+`h9-trivy-fingerprint` has no SARIF files. It holds the same fixture with a `Dockerfile` and `k8s/pod.yaml` and is scanned directly with a build of [aquasecurity/trivy#11760](https://github.com/aquasecurity/trivy/pull/11760), which sets `primaryLocationLineHash` itself.
+
 `gen.sh` scans the repository with Trivy 0.74.0, adds code flows in the format of #11556 and builds the SARIF file of every hypothesis with `jq`. Each hypothesis has its own category, and its alerts point to its own directory.
 
 ## How to upload
@@ -52,6 +54,7 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h7-reorder-plain | workflow | same steps as h6 with plain messages | Same as h6. After step 3 the dismissed #24 shows the path of `rds_api`, #23 shows `[1]` and #25 is fixed. |
 
 | h8-reorder-own-hash | workflow | same steps as h7, `primaryLocationLineHash` is set to the rule, file and full instance address | Alerts keep their instances in every step: #26 `rds_api`, #27 `[0]`, #28 `[1]`. After step 3 the dismissed #27 gets `fixed_at` and its instance on `main` is fixed, while #26 and #28 stay open. |
+| h9-trivy-fingerprint | not uploaded | output of a build of aquasecurity/trivy#11760 | The three AWS-0104 results get different `primaryLocationLineHash` values. Dockerfile and Kubernetes results have no `partialFingerprints`. |
 
 ## Reorder (h6)
 
