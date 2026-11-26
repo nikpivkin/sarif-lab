@@ -1,0 +1,25 @@
+name: upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      sarif:
+        description: SARIF file to upload
+        required: true
+      category:
+        description: Code scanning category
+        required: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: ${{ inputs.sarif }}
+          category: ${{ inputs.category }}
