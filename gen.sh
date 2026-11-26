@@ -7,7 +7,7 @@ TRIVY=${TRIVY:-trivy}
 cd "$(dirname "$0")"
 mkdir -p build
 
-"$TRIVY" config --quiet --skip-dirs build --skip-dirs h9-trivy-fingerprint --format json --output build/report.json .
+"$TRIVY" config --quiet --skip-dirs build --skip-dirs hypotheses/h9-trivy-fingerprint --format json --output build/report.json .
 "$TRIVY" convert --quiet --format sarif --output build/base.sarif build/report.json
 
 # Adds code flows from Occurrences and a temporary _chain field: rule, file and module chain without count/for_each keys.
@@ -38,21 +38,21 @@ jq -n --slurpfile r build/report.json --slurpfile s build/base.sarif '
   ]
 ' > build/codeflows.sarif
 
-# hyp DIR FILE FILTER: keeps the results of DIR, applies FILTER and drops _chain.
-# A result belongs to DIR by its location or, for a remote module, by the first step of its code flow.
+# hyp NAME FILE FILTER: keeps the results of hypotheses/NAME, applies FILTER and drops _chain.
+# A result belongs to the hypothesis by its location or, for a remote module, by the first step of its code flow.
 hyp() {
-  jq --arg dir "$1" "
+  jq --arg dir "hypotheses/$1" --arg name "$1" "
     .runs[0].results |= map(select(any(
       .locations[0], .codeFlows[0].threadFlows[0].locations[0].location;
       .physicalLocation.artifactLocation.uri | startswith(\$dir + \"/\")
     )))
     | $3
     | del(.runs[0].results[]._chain, .runs[0].results[]._addr, .runs[0].results[]._code)
-  " build/codeflows.sarif > "$1/$2"
+  " build/codeflows.sarif > "hypotheses/$1/$2"
 }
 
-# API uploads take the category from automationDetails.
-api='.runs[0].automationDetails = {id: ($dir + "/")}'
+# API uploads take the category from automationDetails, which is the hypothesis name.
+api='.runs[0].automationDetails = {id: ($name + "/")}'
 v1='.runs[0].results[] |= (.partialFingerprints["trivy/finding/v1"] = ._chain)'
 v2='.runs[0].results[] |= (.partialFingerprints["trivy/finding/v2"] = "v2|" + ._chain)'
 

@@ -4,26 +4,26 @@ Experiments with Trivy SARIF output in GitHub code scanning. They check how code
 
 ## Layout
 
-Each `h*` directory holds a copy of the same Terraform fixture and the SARIF files of one hypothesis. The module `modules/sg` has an egress rule to `0.0.0.0/0` (AWS-0104). `service/main.tf` calls it with `count = 2`, and `other/main.tf` calls it once, so Trivy reports three findings on the same line of the module.
+Each directory in `hypotheses` holds a copy of the same Terraform fixture and the SARIF files of one hypothesis. The module `modules/sg` has an egress rule to `0.0.0.0/0` (AWS-0104). `service/main.tf` calls it with `count = 2`, and `other/main.tf` calls it once, so Trivy reports three findings on the same line of the module.
 
 `h9-trivy-fingerprint` has no SARIF files. It holds the same fixture with a `Dockerfile` and `k8s/pod.yaml` and is scanned directly with a build of [aquasecurity/trivy#11760](https://github.com/aquasecurity/trivy/pull/11760), which sets `primaryLocationLineHash` itself.
 
 `h10-remote-module` calls `terraform-aws-modules/security-group/aws` from the registry. Trivy reports two AWS-0104 findings in the module, so their location is a file outside the repository. `gen.sh` takes a result into a hypothesis by its location or by the first step of its code flow, which is the module call here. `h11-remote-snippet` has the same call and adds the code of the cause in `region.snippet` and the block around it in `contextRegion`, with the lines that Trivy truncates shown as `...`.
 
-`gen.sh` scans the repository with Trivy 0.74.0, adds code flows in the format of #11556 and builds the SARIF file of every hypothesis with `jq`. Each hypothesis has its own category, and its alerts point to its own directory.
+`gen.sh` scans the repository with Trivy 0.74.0, adds code flows in the format of #11556 and builds the SARIF file of every hypothesis with `jq`. Each hypothesis has its own category, which is the name of its directory, and its alerts point to its own directory. The alerts in the results were opened while the directories were in the repository root, so their paths have no `hypotheses/` prefix, and uploading a hypothesis again opens new alerts.
 
 ## How to upload
 
 Through `upload-sarif`, which computes `primaryLocationLineHash` from the file contents:
 
 ```sh
-gh workflow run upload.yaml -R nikpivkin/sarif-lab -f sarif=h1-no-fingerprint/result.sarif -f category=h1-no-fingerprint
+gh workflow run upload.yaml -R nikpivkin/sarif-lab -f sarif=hypotheses/h1-no-fingerprint/result.sarif -f category=h1-no-fingerprint
 ```
 
 Through the API, which stores the SARIF as is. The category comes from `automationDetails.id` in the file:
 
 ```sh
-gh api -X POST repos/nikpivkin/sarif-lab/code-scanning/sarifs -f commit_sha=$(git rev-parse HEAD) -f ref=refs/heads/main -f sarif="$(gzip -c h4a-version-overlap/step1.sarif | base64)"
+gh api -X POST repos/nikpivkin/sarif-lab/code-scanning/sarifs -f commit_sha=$(git rev-parse HEAD) -f ref=refs/heads/main -f sarif="$(gzip -c hypotheses/h4a-version-overlap/step1.sarif | base64)"
 ```
 
 Steps of one hypothesis go to different commits, so each step is a new analysis.
