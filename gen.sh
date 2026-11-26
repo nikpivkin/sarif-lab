@@ -33,6 +33,7 @@ jq -n --slurpfile r build/report.json --slurpfile s build/base.sarif '
         + [{nestingLevel: ($occ | length), location: {physicalLocation: $pl, message: {text: $uri}}}]
       }]}]
     | ._chain = "\(.ruleId)|\($uri)|\([$occ[].Resource | strip_key] | join(" > "))"
+    | ._addr = "\(.ruleId)|\($uri)|\([$occ[].Resource] | join(" > "))"
   ]
 ' > build/codeflows.sarif
 
@@ -41,7 +42,7 @@ hyp() {
   jq --arg dir "$1" "
     .runs[0].results |= map(select(.locations[0].physicalLocation.artifactLocation.uri | startswith(\$dir + \"/\")))
     | $3
-    | del(.runs[0].results[]._chain)
+    | del(.runs[0].results[]._chain, .runs[0].results[]._addr)
   " build/codeflows.sarif > "$1/$2"
 }
 
@@ -70,6 +71,11 @@ hyp h6-reorder-via step3.sarif "$via | $reverse | $drop0"
 hyp h7-reorder-plain step1.sarif '.'
 hyp h7-reorder-plain step2.sarif "$reverse"
 hyp h7-reorder-plain step3.sarif "$reverse | $drop0"
+# Same steps as h7 with own primaryLocationLineHash from the full instance address, including count/for_each keys.
+own='.runs[0].results[] |= (.partialFingerprints.primaryLocationLineHash = ._addr)'
+hyp h8-reorder-own-hash step1.sarif "$own"
+hyp h8-reorder-own-hash step2.sarif "$own | $reverse"
+hyp h8-reorder-own-hash step3.sarif "$own | $reverse | $drop0"
 # One result per location with one code flow per module chain; count/for_each instances share a flow.
 hyp h5-grouped-flows result.sarif '
   .runs[0].results |= (
