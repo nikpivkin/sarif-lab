@@ -40,9 +40,10 @@ gh api -H 'Accept: application/sarif+json' repos/nikpivkin/sarif-lab/code-scanni
 | h3-own-linehash | workflow | own value in `primaryLocationLineHash` | The action keeps the value. Three alerts (#13, #14, #15), although two results share the value. |
 | h4a-version-overlap | API | step 1 `v1`, step 2 `v1` and `v2`, step 3 `v2` | Alerts #10, #11, #12 stay open through all steps. |
 | h4b-version-switch | API | step 1 `v1`, step 2 `v2` | Alerts #16, #17, #18 stay open, so custom keys do not take part in matching. |
-| h5-grouped-flows | workflow | one result with two code flows | One alert (#19). How the UI shows two flows is not checked yet. |
+| h5-grouped-flows | workflow | one result with two code flows | One alert (#19). "Show paths" says "2 paths available" and lets you switch between them, but both entries are named "3 steps in main.tf" because the UI does not show the code flow message. |
 
-Not checked yet:
+## UI
 
-- Which path each of the alerts #7, #8 and #9 shows in the UI.
-- How the UI shows the two code flows of alert #19.
+- The alert page and the alert list look the same for #7, #8 and #9. Only "Show paths" tells them apart, and each alert shows the path of its own instance, for example #9 starts at `service/main.tf (module.rds_provisioner[1])`.
+- The step title is the message of the thread flow location. The first step is marked "Source" and the last one "Sink".
+- A region with `endColumn: 1` ends at the start of its last line, so the closing `}` of a block is not highlighted.
