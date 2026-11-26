@@ -34,6 +34,7 @@ jq -n --slurpfile r build/report.json --slurpfile s build/base.sarif '
       }]}]
     | ._chain = "\(.ruleId)|\($uri)|\([$occ[].Resource | strip_key] | join(" > "))"
     | ._addr = "\(.ruleId)|\($uri)|\([$occ[].Resource] | join(" > "))"
+    | ._code = ($x.CauseMetadata.Code.Lines // [])
   ]
 ' > build/codeflows.sarif
 
@@ -46,7 +47,7 @@ hyp() {
       .physicalLocation.artifactLocation.uri | startswith(\$dir + \"/\")
     )))
     | $3
-    | del(.runs[0].results[]._chain, .runs[0].results[]._addr)
+    | del(.runs[0].results[]._chain, .runs[0].results[]._addr, .runs[0].results[]._code)
   " build/codeflows.sarif > "$1/$2"
 }
 
@@ -89,3 +90,11 @@ hyp h5-grouped-flows result.sarif '
   )'
 # Primary location in a remote module outside the repository, code flow from the module call.
 hyp h10-remote-module result.sarif '.'
+# Same as h10 with the code of the cause in region.snippet and the block around it in contextRegion.
+# Lines that Trivy truncates in the code of the cause are shown as "...".
+hyp h11-remote-snippet result.sarif '
+  .runs[0].results[] |= (._code as $c | .locations[0].physicalLocation |= (
+    .region.snippet = {text: ([$c[] | select(.IsCause) | .Content] | join("\n"))}
+    | .contextRegion = {startLine: $c[0].Number, endLine: $c[-1].Number,
+        snippet: {text: ([$c[] | if .Truncated then "  ..." else .Content end] | join("\n"))}}
+  ))'
